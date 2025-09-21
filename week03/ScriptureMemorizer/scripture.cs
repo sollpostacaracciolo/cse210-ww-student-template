@@ -38,3 +38,5 @@ public class Scripture
 
         public bool AllWordsHidden() => _words.All(w => w.IsHidden());
     }
+
+    

@@ -17,3 +17,4 @@ public class Word
         return _hidden ? new string('_', Text.Length) : Text;
     }
 }
+

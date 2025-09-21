@@ -12,7 +12,7 @@ public class Entry
     {
         _date = DateTime.Now.ToShortDateString();
         _promptText = prompt;      // asigna al campo
-        _entry = entryText;  
+        _entry = entryText;
     }
     public void Display()
     {
@@ -23,6 +23,8 @@ public class Entry
 
     }
 
-    
+
 
 }
+
+
