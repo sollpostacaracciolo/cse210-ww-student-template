@@ -3,29 +3,30 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 
-// Proyecto W06: Programa de "Búsqueda Eterna"
+// Project W06: "Eternal Quest"
 // --------------------------------------------------------------
-// Este programa implementa un sistema de metas con gamificación.
-// Requisitos cubiertos:
-//  - Metas simples (se completan una sola vez y otorgan puntos)
-//  - Metas eternas (nunca terminan, otorgan puntos cada vez)
-//  - Metas tipo checklist (n veces + bonificación al completar)
-//  - Mostrar puntuación
-//  - Crear nuevas metas de cualquier tipo
-//  - Registrar eventos para otorgar puntos
-//  - Listar metas con estado (completado, conteos, etc.)
-//  - Guardar / Cargar metas y puntuación desde archivo
-//  - Herencia, polimorfismo, encapsulación
+// This program implements a goal system with gamification.
+// Requirements covered:
+//  - Simple goals (completed once and grant points)
+//  - Eternal goals (never end, grant points each time)
+//  - Checklist goals (n times + bonus on completion)
+//  - Show score
+//  - Create new goals of any type
+//  - Record events to grant points
+//  - List goals with state (completed, counts, etc.)
+//  - Save / Load goals and score from file
+//  - Inheritance, polymorphism, encapsulation
 //
-// Creatividad (superando requisitos) — ver más abajo:
-//  1) Sistema de Niveles: El usuario sube de nivel cada 1000 puntos.
-//     Muestra progreso hacia el siguiente nivel.
-//  2) Insignias: Se otorgan insignias por completar metas simples y checklists.
-//  3) Meta Negativa (opcional): Registra malos hábitos y resta puntos.
-//  4) Meta de Progreso (opcional): Permite sumar unidades de avance a un objetivo grande; otorga puntos por unidad y bonificación al alcanzar el total.
-//  5) Persistencia con formato de archivo simple y legible por humanos.
+// Creativity (beyond requirements):
+//  1) Level System: the user levels up every 1000 points.
+//     Shows progress toward the next level.
+//  2) Badges: awarded for completing simple and checklist goals.
+//  3) Negative Goal (optional): logs bad habits and subtracts points.
+//  4) Progress Goal (optional): add progress units toward a big target;
+//     grants points per unit and a bonus upon reaching the total.
+//  5) Persistence with a simple, human-readable file format.
 //
-// Nota para el revisor: La descripción de creatividad está aquí en Program.cs
+// Reviewer note: creativity description is here in Program.cs
 // --------------------------------------------------------------
 
 namespace EternalQuest
@@ -52,7 +53,7 @@ namespace EternalQuest
         public abstract int RecordEvent();
         public abstract string GetStatus();
 
-        // Para guardar/cargar (formato por líneas)
+        // For save/load (line-based format)
         public abstract string Serialize();
 
         public virtual void PostLoadFixup() { }
@@ -72,7 +73,7 @@ namespace EternalQuest
 
         public override int RecordEvent()
         {
-            if (_done) return 0; // ya completado
+            if (_done) return 0; // already completed
             _done = true;
             return BasePoints;
         }
@@ -129,7 +130,7 @@ namespace EternalQuest
 
         public override string GetStatus()
         {
-            return $"[∞] {Name} — {Description} (+{BasePoints} por registro, total { _timesLogged })";
+            return $"[∞] {Name} — {Description} (+{BasePoints} per log, total {_timesLogged})";
         }
 
         public override string Serialize()
@@ -193,7 +194,7 @@ namespace EternalQuest
         public override string GetStatus()
         {
             string box = _completed ? "[X]" : "[ ]";
-            return $"{box} {Name} — {Description} ({_currentCount}/{_targetCount}, +{BasePoints} c/u, bonus { _bonus } al completar)";
+            return $"{box} {Name} — {Description} ({(_currentCount)}/{_targetCount}, +{BasePoints} each, bonus {_bonus} on completion)";
         }
 
         public override string Serialize()
@@ -228,7 +229,7 @@ namespace EternalQuest
         protected static string Unescape(string s) => s.Replace("\\|", "|");
     }
 
-    // Creatividad: Meta Negativa (resta puntos al registrarse). Nunca se completa.
+    // Creativity: Negative Goal (subtracts points when logged). Never completes.
     class NegativeGoal : Goal
     {
         private int _times;
@@ -240,15 +241,18 @@ namespace EternalQuest
 
         public override string Type => "Negative";
         public override bool IsComplete => false;
+
         public override int RecordEvent()
         {
             _times++;
-            return BasePoints; // es negativo
+            return BasePoints; // it's negative
         }
+
         public override string GetStatus()
         {
-            return $"[!] {Name} — {Description} ({_times} veces, {BasePoints} por evento)";
+            return $"[!] {Name} — {Description} ({_times} times, {BasePoints} per event)";
         }
+
         public override string Serialize()
         {
             // Negative|Name|Description|Penalty|Times
@@ -261,6 +265,7 @@ namespace EternalQuest
                 _times.ToString(CultureInfo.InvariantCulture)
             });
         }
+
         public static NegativeGoal Deserialize(string[] parts)
         {
             var name = Unescape(parts[1]);
@@ -269,11 +274,12 @@ namespace EternalQuest
             var times = parts.Length > 4 ? int.Parse(parts[4], CultureInfo.InvariantCulture) : 0;
             return new NegativeGoal(name, desc, Math.Abs(penalty), times);
         }
+
         protected static string Escape(string s) => s.Replace("|", "\\|");
         protected static string Unescape(string s) => s.Replace("\\|", "|");
     }
 
-    // Creatividad: Meta de Progreso por unidades.
+    // Creativity: Progress Goal by units.
     class ProgressGoal : Goal
     {
         private int _unitsTarget;
@@ -297,10 +303,10 @@ namespace EternalQuest
 
         public override int RecordEvent()
         {
-            Console.Write("¿Cuántas unidades avanzaste? ");
+            Console.Write("How many units did you advance? ");
             if (!int.TryParse(Console.ReadLine(), out int units) || units <= 0)
             {
-                Console.WriteLine("Entrada inválida. No se registró avance.");
+                Console.WriteLine("Invalid input. No progress recorded.");
                 return 0;
             }
             int before = _unitsDone;
@@ -318,7 +324,7 @@ namespace EternalQuest
         public override string GetStatus()
         {
             string box = _completed ? "[X]" : "[ ]";
-            return $"{box} {Name} — {Description} ({_unitsDone}/{_unitsTarget} unidades, +{_perUnitPoints}/u, bonus {_bonusOnFinish})";
+            return $"{box} {Name} — {Description} ({_unitsDone}/{_unitsTarget} units, +{_perUnitPoints}/unit, bonus {_bonusOnFinish})";
         }
 
         public override string Serialize()
@@ -364,7 +370,7 @@ namespace EternalQuest
         public void AddPoints(int pts)
         {
             _score += pts;
-            if (_score < 0) _score = 0; // sin negativos globales
+            if (_score < 0) _score = 0; // no negative global score
         }
 
         public int Level => 1 + (_score / 1000);
@@ -417,19 +423,19 @@ namespace EternalQuest
             while (true)
             {
                 Console.WriteLine();
-                Console.WriteLine("=== BÚSQUEDA ETERNA ===");
-                Console.WriteLine($"Nivel: {_profile.Level}  Puntos: {_profile.Score}  (faltan {_profile.PointsToNextLevel} para el próximo nivel)");
+                Console.WriteLine("=== ETERNAL QUEST ===");
+                Console.WriteLine($"Level: {_profile.Level}  Points: {_profile.Score}  (missing {_profile.PointsToNextLevel} for the next level)");
                 if (_profile.Badges.Count > 0)
-                    Console.WriteLine("Insignias: " + string.Join(" | ", _profile.Badges));
+                    Console.WriteLine("Badges: " + string.Join(" | ", _profile.Badges));
                 Console.WriteLine("------------------------------");
-                Console.WriteLine("1) Crear nueva meta");
-                Console.WriteLine("2) Listar metas");
-                Console.WriteLine("3) Registrar evento (log)");
-                Console.WriteLine("4) Mostrar puntuación");
-                Console.WriteLine("5) Guardar a archivo");
-                Console.WriteLine("6) Cargar desde archivo");
-                Console.WriteLine("7) Salir");
-                Console.Write("Seleccione una opción: ");
+                Console.WriteLine("1) Create a new goal");
+                Console.WriteLine("2) List goals");
+                Console.WriteLine("3) Record event");
+                Console.WriteLine("4) Show score");
+                Console.WriteLine("5) Save to file");
+                Console.WriteLine("6) Load from file");
+                Console.WriteLine("7) Exit");
+                Console.Write("Choose an option: ");
 
                 string? choice = Console.ReadLine();
                 Console.WriteLine();
@@ -442,59 +448,59 @@ namespace EternalQuest
                     case "5": Save(); break;
                     case "6": Load(); break;
                     case "7": return;
-                    default: Console.WriteLine("Opción inválida."); break;
+                    default: Console.WriteLine("Invalid option."); break;
                 }
             }
         }
 
         private void CreateGoal()
         {
-            Console.WriteLine("Tipos: 1) Simple  2) Eterna  3) Checklist  4) Negativa  5) Progreso");
-            Console.Write("Seleccione tipo: ");
+            Console.WriteLine("Types: 1) Simple  2) Eternal  3) Checklist  4) Negative  5) Progress");
+            Console.Write("Choose a type: ");
             string? t = Console.ReadLine();
 
-            Console.Write("Nombre: ");
-            string name = Console.ReadLine() ?? "(sin nombre)";
-            Console.Write("Descripción: ");
+            Console.Write("Name: ");
+            string name = Console.ReadLine() ?? "(no name)";
+            Console.Write("Description: ");
             string desc = Console.ReadLine() ?? "";
 
             if (t == "1")
             {
-                int pts = PromptInt("Puntos al completar: ", 1);
+                int pts = PromptInt("Points on completion: ", 1);
                 _goals.Add(new SimpleGoal(name, desc, pts));
-                Console.WriteLine("Meta simple creada.");
+                Console.WriteLine("Simple goal created.");
             }
             else if (t == "2")
             {
-                int pts = PromptInt("Puntos por registro: ", 1);
+                int pts = PromptInt("Points per log: ", 1);
                 _goals.Add(new EternalGoal(name, desc, pts));
-                Console.WriteLine("Meta eterna creada.");
+                Console.WriteLine("Eternal goal created.");
             }
             else if (t == "3")
             {
-                int pts = PromptInt("Puntos por registro: ", 1);
-                int target = PromptInt("¿Cuántas veces para completar?: ", 1);
-                int bonus = PromptInt("Bonificación al completar: ", 0);
+                int pts = PromptInt("Points per log: ", 1);
+                int target = PromptInt("How many times to complete?: ", 1);
+                int bonus = PromptInt("Completion bonus: ", 0);
                 _goals.Add(new ChecklistGoal(name, desc, pts, target, bonus));
-                Console.WriteLine("Meta checklist creada.");
+                Console.WriteLine("Checklist goal created.");
             }
             else if (t == "4")
             {
-                int penalty = PromptInt("Puntos a restar por evento (número positivo): ", 1);
+                int penalty = PromptInt("Points to subtract per event (positive number): ", 1);
                 _goals.Add(new NegativeGoal(name, desc, penalty));
-                Console.WriteLine("Meta negativa creada.");
+                Console.WriteLine("Negative goal created.");
             }
             else if (t == "5")
             {
-                int perUnit = PromptInt("Puntos por unidad de progreso: ", 1);
-                int target = PromptInt("Unidades totales objetivo: ", 1);
-                int bonus = PromptInt("Bonificación al completar: ", 0);
+                int perUnit = PromptInt("Points per progress unit: ", 1);
+                int target = PromptInt("Total target units: ", 1);
+                int bonus = PromptInt("Bonus on completion: ", 0);
                 _goals.Add(new ProgressGoal(name, desc, perUnit, target, bonus));
-                Console.WriteLine("Meta de progreso creada.");
+                Console.WriteLine("Progress goal created.");
             }
             else
             {
-                Console.WriteLine("Tipo inválido. No se creó la meta.");
+                Console.WriteLine("Invalid type. Goal not created.");
             }
         }
 
@@ -502,13 +508,13 @@ namespace EternalQuest
         {
             if (_goals.Count == 0)
             {
-                Console.WriteLine("No hay metas aún. Cree una con la opción 1.");
+                Console.WriteLine("There are no goals yet. Create one with option 1.");
                 return;
             }
-            Console.WriteLine("--- Metas ---");
+            Console.WriteLine("--- Goals ---");
             for (int i = 0; i < _goals.Count; i++)
             {
-                Console.WriteLine($"{i + 1}. {_goals[i].GetStatus()}  (tipo: {_goals[i].Type})");
+                Console.WriteLine($"{i + 1}. {_goals[i].GetStatus()}  (type: {_goals[i].Type})");
             }
         }
 
@@ -516,97 +522,95 @@ namespace EternalQuest
         {
             if (_goals.Count == 0)
             {
-                Console.WriteLine("No hay metas para registrar.");
+                Console.WriteLine("There are no goals to record.");
                 return;
             }
             ListGoals();
-            Console.Write("Seleccione el número de la meta a registrar: ");
+            Console.Write("Select the goal number to record: ");
             if (!int.TryParse(Console.ReadLine(), out int idx) || idx < 1 || idx > _goals.Count)
             {
-                Console.WriteLine("Selección inválida.");
+                Console.WriteLine("Invalid selection.");
                 return;
             }
             var goal = _goals[idx - 1];
             int pts = goal.RecordEvent();
             _profile.AddPoints(pts);
 
-            // Insignias por creatividad
+            // Creative: award badges
             if (goal is SimpleGoal sg && sg.IsComplete)
             {
-                _profile.AwardBadge($"¡Completaste: {goal.Name}!");
+                _profile.AwardBadge($"Completed: {goal.Name}");
             }
             if (goal is ChecklistGoal cg && cg.IsComplete)
             {
-                _profile.AwardBadge($"¡Checklist logrado: {goal.Name}!");
+                _profile.AwardBadge($"Checklist completed: {goal.Name}");
             }
             if (pts != 0)
-                Console.WriteLine($"Puntos ganados: {pts}. Puntuación total: {_profile.Score}");
+                Console.WriteLine($"Points gained: {pts}. Total score: {_profile.Score}");
             else
-                Console.WriteLine("Sin cambio de puntos.");
+                Console.WriteLine("No change in points.");
         }
 
         private void ShowScore()
         {
-            Console.WriteLine($"Puntuación: {_profile.Score}");
-            Console.WriteLine($"Nivel: {_profile.Level} — Progreso en nivel: {_profile.PointsIntoLevel}/1000 (faltan {_profile.PointsToNextLevel})");
+            Console.WriteLine($"Score: {_profile.Score}");
+            Console.WriteLine($"Level: {_profile.Level} — Level progress: {_profile.PointsIntoLevel}/1000 (missing {_profile.PointsToNextLevel})");
             if (_profile.Badges.Count > 0)
             {
-                Console.WriteLine("Insignias: " + string.Join(" | ", _profile.Badges));
+                Console.WriteLine("Badges: " + string.Join(" | ", _profile.Badges));
             }
         }
 
         private void Save()
         {
-            Console.Write("Nombre de archivo (ej. metas.txt): ");
-            string file = Console.ReadLine() ?? "metas.txt";
+            Console.Write("File name (e.g., goals.txt): ");
+            string file = Console.ReadLine() ?? "goals.txt";
             using var writer = new StreamWriter(file);
 
-            // Primero, perfil
+            // Profile first
             writer.WriteLine("#PROFILE");
             writer.WriteLine(_profile.Serialize());
 
             writer.WriteLine("#GOALS");
-            // Cada meta una línea serializada
+            // One serialized line per goal
             foreach (var g in _goals)
             {
                 writer.WriteLine(g.Serialize());
             }
-            Console.WriteLine($"Guardado en '{file}'.");
+            Console.WriteLine($"Saved to '{file}'.");
         }
 
         private void Load()
         {
-            Console.Write("Archivo a cargar: ");
-            string file = Console.ReadLine() ?? "metas.txt";
+            Console.Write("File to load: ");
+            string file = Console.ReadLine() ?? "goals.txt";
             if (!File.Exists(file))
             {
-                Console.WriteLine("No existe el archivo.");
+                Console.WriteLine("File does not exist.");
                 return;
             }
             using var reader = new StreamReader(file);
             string? line;
 
-            // limpiar
+            // clear
             _goals.Clear();
-            // perfil
+            // profile
             line = reader.ReadLine();
             if (line == null || line != "#PROFILE")
             {
-                Console.WriteLine("Formato inválido (falta #PROFILE).");
+                Console.WriteLine("Invalid format (missing #PROFILE).");
                 return;
             }
-            // SCORE y BADGES
+            // SCORE and BADGES
             var profile = PlayerProfile.Deserialize(reader);
-            // Reemplazar estado interno
-            // (no hay setters, así que reconstruimos GoalManager? simplificamos así:)
-            // hack simple: reflejar mediante campos privados no es ideal; en cambio, reasignamos con copia
+            // copy into our profile
             CopyProfile(profile);
 
-            // Leer separador de metas
+            // goals header
             line = reader.ReadLine();
             if (line == null || line != "#GOALS")
             {
-                Console.WriteLine("Formato inválido (falta #GOALS).");
+                Console.WriteLine("Invalid format (missing #GOALS).");
                 return;
             }
             while ((line = reader.ReadLine()) != null)
@@ -616,23 +620,22 @@ namespace EternalQuest
                 if (parts.Length == 0) continue;
                 Goal? g = parts[0] switch
                 {
-                    "Simple" => SimpleGoal.Deserialize(parts),
-                    "Eternal" => EternalGoal.Deserialize(parts),
-                    "Checklist" => ChecklistGoal.Deserialize(parts),
+                    "Simple"   => SimpleGoal.Deserialize(parts),
+                    "Eternal"  => EternalGoal.Deserialize(parts),
+                    "Checklist"=> ChecklistGoal.Deserialize(parts),
                     "Negative" => NegativeGoal.Deserialize(parts),
                     "Progress" => ProgressGoal.Deserialize(parts),
                     _ => null
                 };
                 if (g != null) _goals.Add(g);
             }
-            Console.WriteLine($"Cargadas {_goals.Count} metas desde '{file}'.");
+            Console.WriteLine($"Loaded {_goals.Count} goals from '{file}'.");
         }
 
-        // Copia valores de otro perfil al nuestro (sin exponer setters públicos)
+        // Copy values from another profile to ours (without exposing public setters)
         private void CopyProfile(PlayerProfile other)
         {
-            // Truco: volver a sumar puntos e insignias
-            // (es simple y respeta encapsulación)
+            // Simple approach: re-add points and badges
             int current = _profile.Score;
             int delta = Math.Max(0, other.Score - current);
             if (delta > 0) _profile.AddPoints(delta);
@@ -645,13 +648,13 @@ namespace EternalQuest
             Console.Write(prompt);
             if (!int.TryParse(Console.ReadLine(), out int v) || v < min)
             {
-                Console.WriteLine($"Usando valor por defecto: {min}");
+                Console.WriteLine($"Using default value: {min}");
                 return min;
             }
             return v;
         }
 
-        // Divide conservando escapes de '|'
+        // Split keeping escaped '|' sequences
         private static string[] SplitKeepingEscapes(string s)
         {
             var list = new List<string>();
